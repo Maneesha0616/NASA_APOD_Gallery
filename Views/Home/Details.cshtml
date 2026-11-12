@@ -1,0 +1,97 @@
+@model NasaApodGallery.Models.ApodEntry
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="row mb-3">
+    <div class="col-12">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm mb-3">
+            <i class="bi bi-arrow-left me-1"></i> Back to Gallery
+        </a>
+    </div>
+</div>
+
+<div class="card bg-dark bg-opacity-75 border border-secondary border-opacity-50 shadow-lg rounded-4 overflow-hidden">
+    <div class="card-header bg-space-nav p-4 border-bottom border-secondary border-opacity-25">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-info text-dark fs-6 px-3 py-1">
+                    <i class="bi bi-calendar3 me-1"></i> @Model.Date.ToString("MMMM dd, yyyy")
+                </span>
+                <span class="badge bg-secondary px-2 py-1">
+                    <i class="bi @(Model.IsVideo ? "bi-camera-video" : "bi-image") me-1"></i> @Model.MediaType.ToUpperInvariant()
+                </span>
+                @if (!string.IsNullOrWhiteSpace(Model.Copyright))
+                {
+                    <span class="badge bg-dark border border-secondary text-secondary px-2 py-1">
+                        <i class="bi bi-c-circle me-1"></i> @Model.Copyright.Trim()
+                    </span>
+                }
+            </div>
+
+            <div class="small text-secondary">
+                Saved to DB: @Model.SavedAt.ToString("yyyy-MM-dd HH:mm:ss UTC")
+            </div>
+        </div>
+
+        <h2 class="display-6 fw-bold text-light mb-0">@Model.Title</h2>
+    </div>
+
+    <div class="card-body p-4">
+        <!-- Media Container -->
+        <div class="mb-4">
+            @if (Model.IsVideo)
+            {
+                <div class="ratio ratio-16x9 shadow-lg">
+                    <iframe src="@Model.Url" title="@Model.Title" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                </div>
+            }
+            else
+            {
+                <div class="apod-details-image-container shadow-lg">
+                    <img src="@Model.Url"
+                         alt="@Model.Title"
+                         class="img-fluid"
+                         loading="lazy"
+                         onerror="this.onerror=null; this.src='https://placehold.co/1200x800/141b2d/38bdf8?text=NASA+APOD';" />
+                </div>
+            }
+        </div>
+
+        <!-- Action Links -->
+        <div class="d-flex flex-wrap gap-2 mb-4 justify-content-end">
+            @if (!string.IsNullOrWhiteSpace(Model.HdUrl))
+            {
+                <a href="@Model.HdUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-info btn-sm">
+                    <i class="bi bi-arrows-fullscreen me-1"></i> Open Original High-Definition (HD) Image
+                </a>
+            }
+            <a href="@Model.Url" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-box-arrow-up-right me-1"></i> View Direct URL
+            </a>
+        </div>
+
+        <!-- Explanation -->
+        <div class="p-4 rounded-3 bg-black bg-opacity-35 border border-secondary border-opacity-25">
+            <h5 class="text-info fw-semibold mb-3">
+                <i class="bi bi-info-circle me-2"></i>Explanation
+            </h5>
+            <p class="text-light text-opacity-90 lead fs-6 lh-lg mb-0">
+                @(string.IsNullOrWhiteSpace(Model.Explanation) ? "No explanation provided by NASA for this entry." : Model.Explanation)
+            </p>
+        </div>
+
+        <!-- Metadata Section -->
+        <div class="row g-3 mt-3 pt-3 border-top border-secondary border-opacity-25 text-secondary small">
+            <div class="col-sm-4">
+                <strong>Database Record ID:</strong> #@Model.Id
+            </div>
+            <div class="col-sm-4">
+                <strong>Service Version:</strong> @(Model.ServiceVersion ?? "v1")
+            </div>
+            <div class="col-sm-4">
+                <strong>API Endpoint:</strong> NASA APOD REST API
+            </div>
+        </div>
+    </div>
+</div>

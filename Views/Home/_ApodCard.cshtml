@@ -1,0 +1,57 @@
+@model NasaApodGallery.Models.ApodEntry
+
+<div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex">
+    <div class="card apod-card w-100 h-100 shadow-sm d-flex flex-column">
+        <!-- Media / Image Block -->
+        <div class="apod-card-image-wrapper">
+            <img src="@Model.DisplayImageUrl"
+                 alt="@Model.Title"
+                 class="apod-card-img"
+                 loading="lazy"
+                 onerror="this.onerror=null; this.src='https://placehold.co/600x400/141b2d/38bdf8?text=NASA+APOD';" />
+
+            @if (Model.IsVideo)
+            {
+                <div class="video-overlay-badge" title="Video Media">
+                    <i class="bi bi-play-fill"></i>
+                </div>
+            }
+
+            <span class="badge apod-badge-date position-absolute top-0 start-0 m-2 rounded-pill px-2 py-1 shadow">
+                <i class="bi bi-calendar3 me-1"></i>@Model.Date.ToString("yyyy-MM-dd")
+            </span>
+
+            <span class="badge bg-dark bg-opacity-75 text-info position-absolute top-0 end-0 m-2 rounded-pill px-2 py-1 border border-secondary border-opacity-50">
+                <i class="bi @(Model.IsVideo ? "bi-camera-video" : "bi-image") me-1"></i>@(Model.MediaType?.ToUpperInvariant() ?? "IMAGE")
+            </span>
+        </div>
+
+        <!-- Content Block: Title & Action -->
+        <div class="card-body apod-card-body flex-grow-1 d-flex flex-column justify-content-between">
+            <h5 class="apod-card-title mb-3" title="@Model.Title">
+                @Model.Title
+            </h5>
+
+            <div class="d-flex align-items-center justify-content-between pt-2 border-top border-secondary border-opacity-25 mt-auto">
+                <button type="button"
+                        class="btn btn-sm btn-outline-info rounded-pill px-3"
+                        data-bs-toggle="modal"
+                        data-bs-target="#apodModal"
+                        data-apod-id="@Model.Id"
+                        data-apod-title="@Model.Title"
+                        data-apod-date="@Model.Date.ToString("MMMM dd, yyyy")"
+                        data-apod-mediatype="@Model.MediaType"
+                        data-apod-url="@Model.Url"
+                        data-apod-hdurl="@Model.HdUrl"
+                        data-apod-explanation="@Model.Explanation"
+                        data-apod-copyright="@Model.Copyright">
+                    <i class="bi bi-eye me-1"></i> Preview
+                </button>
+
+                <a asp-controller="Home" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-link text-secondary text-decoration-none p-0" title="Full Details">
+                    <i class="bi bi-arrow-up-right-circle fs-5 text-info text-opacity-75"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
