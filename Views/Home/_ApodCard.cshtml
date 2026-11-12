@@ -4,11 +4,12 @@
     <div class="card apod-card w-100 h-100 shadow-sm d-flex flex-column">
         <!-- Media / Image Block -->
         <div class="apod-card-image-wrapper">
-            <img src="@Model.DisplayImageUrl"
+            <img src="@(Model.IsVideo ? Model.DisplayImageUrl : Url.Action("ImageProxy", "Home", new { url = Model.DisplayImageUrl }))"
                  alt="@Model.Title"
                  class="apod-card-img"
+                 referrerpolicy="no-referrer"
                  loading="lazy"
-                 onerror="this.onerror=null; this.src='https://placehold.co/600x400/141b2d/38bdf8?text=NASA+APOD';" />
+                 onerror="this.onerror=null; this.src='@Model.DisplayImageUrl';" />
 
             @if (Model.IsVideo)
             {

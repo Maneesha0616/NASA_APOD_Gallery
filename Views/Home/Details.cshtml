@@ -49,11 +49,12 @@
             else
             {
                 <div class="apod-details-image-container shadow-lg">
-                    <img src="@Model.Url"
+                    <img src="@(Model.IsVideo ? Model.DisplayImageUrl : Url.Action("ImageProxy", "Home", new { url = Model.DisplayImageUrl }))"
                          alt="@Model.Title"
                          class="img-fluid"
+                         referrerpolicy="no-referrer"
                          loading="lazy"
-                         onerror="this.onerror=null; this.src='https://placehold.co/1200x800/141b2d/38bdf8?text=NASA+APOD';" />
+                         onerror="this.onerror=null; this.src='@Model.DisplayImageUrl';" />
                 </div>
             }
         </div>

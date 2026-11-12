@@ -151,6 +151,39 @@ public class HomeController : Controller
         }
     }
 
+    /// <summary>
+    /// Proxies external astronomy images through the local server to bypass CORS, Referrer policies, and mixed-content restrictions in browsers.
+    /// </summary>
+    [HttpGet]
+    [ResponseCache(Duration = 86400, Location = ResponseCacheLocation.Client)]
+    public async Task<IActionResult> ImageProxy([FromQuery] string url)
+    {
+        if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return NotFound();
+        }
+
+        try
+        {
+            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+            var response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);
+            if (!response.IsSuccessStatusCode)
+            {
+                return Redirect(url);
+            }
+
+            var contentType = response.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
+            var stream = await response.Content.ReadAsStreamAsync();
+            return File(stream, contentType);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to proxy image: {Url}", url);
+            return Redirect(url);
+        }
+    }
+
     public IActionResult Privacy()
     {
         return View();
