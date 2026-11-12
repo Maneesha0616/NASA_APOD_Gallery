@@ -54,3 +54,4 @@ BEGIN
     PRINT 'Index [IX_ApodEntries_Date] created successfully.';
 END
 GO
+

@@ -264,3 +264,4 @@ ON [dbo].[ApodEntries] ([Date] DESC);
 - [x] Responsive gallery layout on Home page showing image and title.
 - [x] Git repository initialized with clear commit history.
 - [x] Comprehensive documentation and setup instructions.
+

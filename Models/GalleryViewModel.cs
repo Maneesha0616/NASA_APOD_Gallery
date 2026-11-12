@@ -37,3 +37,4 @@ public class GalleryViewModel
     /// </summary>
     public FetchRequestViewModel FetchRequest { get; set; } = new();
 }
+

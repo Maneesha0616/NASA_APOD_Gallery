@@ -66,3 +66,4 @@ public class ApodEntry
     public bool IsVideo =>
         string.Equals(MediaType, "video", StringComparison.OrdinalIgnoreCase);
 }
+

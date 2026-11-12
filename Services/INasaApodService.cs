@@ -13,3 +13,4 @@ public interface INasaApodService
     /// <returns>A list of deserialized NasaApodDto objects</returns>
     Task<List<NasaApodDto>> FetchApodRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
 }
+

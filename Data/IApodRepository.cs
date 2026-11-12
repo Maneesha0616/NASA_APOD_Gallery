@@ -27,3 +27,4 @@ public interface IApodRepository
     /// </summary>
     Task<int> GetTotalCountAsync();
 }
+

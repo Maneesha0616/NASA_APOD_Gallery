@@ -34,3 +34,4 @@ public class NasaApodDto
     [JsonPropertyName("thumbnail_url")]
     public string? ThumbnailUrl { get; set; }
 }
+

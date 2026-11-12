@@ -1,4 +1,4 @@
-﻿// Client-side interactions for NASA APOD Gallery
+// Client-side interactions for NASA APOD Gallery
 
 document.addEventListener('DOMContentLoaded', function () {
     // Preset date range selector buttons
