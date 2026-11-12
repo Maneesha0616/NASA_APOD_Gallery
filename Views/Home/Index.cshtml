@@ -134,10 +134,23 @@ else
         <div class="card-body">
             <i class="bi bi-telescope fs-1 text-info mb-3 d-inline-block"></i>
             <h4 class="text-light mb-2">No Astronomy Pictures Found</h4>
-            @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+            @if (Model.TotalSavedCount > 0)
             {
-                <p class="text-secondary mb-3">No saved records matched your search query "<em>@Model.SearchTerm</em>".</p>
-                <a asp-action="Index" class="btn btn-outline-info btn-sm">Clear Search Filter</a>
+                <p class="text-secondary mb-3">
+                    No saved records in your database matched your filter criteria
+                    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+                    {
+                        <span>(Search: "<em>@Model.SearchTerm</em>")</span>
+                    }
+                    @if (Model.MediaTypeFilter != "all")
+                    {
+                        <span>(Media: <strong>@Model.MediaTypeFilter</strong>)</span>
+                    }
+                    .
+                </p>
+                <a asp-action="Index" class="btn btn-outline-info btn-sm">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Clear All Filters
+                </a>
             }
             else
             {

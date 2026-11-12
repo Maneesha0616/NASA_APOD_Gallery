@@ -129,7 +129,7 @@ public class ApodRepository : IApodRepository
             FROM [dbo].[ApodEntries]
             WHERE 
                 (@SearchTerm IS NULL OR [Title] LIKE @SearchPattern OR [Explanation] LIKE @SearchPattern)
-                AND (@MediaType IS NULL OR @MediaType = 'all' OR [MediaType] = @MediaType)
+                AND (@MediaType IS NULL OR @MediaType = 'all' OR LOWER([MediaType]) = LOWER(@MediaType))
             ORDER BY 
                 CASE WHEN @SortOrder = 'asc' THEN [Date] END ASC,
                 CASE WHEN @SortOrder <> 'asc' THEN [Date] END DESC;";
