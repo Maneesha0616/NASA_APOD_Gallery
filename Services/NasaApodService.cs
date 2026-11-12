@@ -43,6 +43,11 @@ public class NasaApodService : INasaApodService
         {
             response = await _httpClient.GetAsync(requestUrl, cancellationToken);
         }
+        catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogError(ex, "NASA APOD API request timed out.");
+            throw new InvalidOperationException("The NASA APOD API request timed out after waiting for NASA's servers. NASA's servers may be experiencing slow response times. Please try again or select a smaller date range (such as 3 to 7 days).", ex);
+        }
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "Network error while connecting to NASA APOD API.");

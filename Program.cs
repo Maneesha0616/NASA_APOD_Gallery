@@ -6,10 +6,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Register NASA APOD API client with HttpClient
+// Register NASA APOD API client with HttpClient (120s timeout for large date ranges)
 builder.Services.AddHttpClient<INasaApodService, NasaApodService>(client =>
 {
-    client.Timeout = TimeSpan.FromSeconds(30);
+    client.Timeout = TimeSpan.FromSeconds(120);
     client.DefaultRequestHeaders.Add("User-Agent", "NasaApodGallery-MvcApp/1.0");
 });
 
