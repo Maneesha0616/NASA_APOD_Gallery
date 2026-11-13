@@ -20,6 +20,7 @@ A full-stack ASP.NET Core MVC web application that consumes **NASA's Astronomy P
   - [Duplicate Prevention](#duplicate-prevention)
   - [Responsive Gallery View](#responsive-gallery-view)
 - [Database Schema](#database-schema)
+- [Known Issue: NASA APOD API Returning Placeholder Data](#known-issue-nasa-apod-api-returning-placeholder-data-observed-2026-11-13)
 - [License](#license)
 
 ---
@@ -276,6 +277,36 @@ CREATE TABLE [dbo].[ApodEntries] (
 
 CREATE NONCLUSTERED INDEX [IX_ApodEntries_Date]
 ON [dbo].[ApodEntries] ([Date] DESC);
+```
+
+---
+
+## Known Issue: NASA APOD API Returning Placeholder Data (observed 2026-11-13)
+
+At the time of submission, NASA's own `/planetary/apod` endpoint is returning degraded results for **every**
+date tested — recent and historical alike:
+
+| Date queried | `title` returned | `url` returned |
+|---|---|---|
+| 2026-11-12 | `NASA Science` | `.../themes/nasa-child/assets/images/nasa-logo@2x.png` |
+| 2024-03-02 | `NASA Science` | `.../themes/nasa-child/assets/images/nasa-logo@2x.png` |
+
+In addition, the legacy image host used by previously stored records has been retired:
+`https://apod.nasa.gov/apod/image/...jpg` now responds `301` → `https://science.nasa.gov/apod/`, which serves
+`text/html` rather than an image.
+
+**Effect on the gallery.** Cards for records fetched during the outage show NASA's site logo, and cards for
+older records fall back to the drawn telescope placeholder, because `ImageProxy` deliberately refuses any
+non-`image/*` response instead of rendering a broken icon.
+
+**This is upstream, not an application defect.** The pipeline itself is exercised end-to-end and works: the
+API call succeeds, the JSON array deserializes, ADO.NET inserts new dates and skips duplicates, and the proxy
+streams reachable images (`200 image/png` from `science.nasa.gov`). No code change is required to recover —
+once NASA restores the APOD feed, re-fetching a date range repopulates the gallery with real imagery. To start
+clean during the outage:
+
+```sql
+TRUNCATE TABLE [dbo].[ApodEntries];   -- or DELETE FROM [dbo].[ApodEntries];
 ```
 
 ---
