@@ -1,14 +1,14 @@
-# 🚀 NASA APOD Gallery
+# NASA APOD Gallery
 
 A web application built using **ASP.NET Core MVC, C#, and SQL Server** that integrates with NASA's Astronomy Picture of the Day (APOD) API to retrieve, store, and display astronomy pictures in a responsive gallery.
 
-## 📌 Project Overview
+## Project Overview
 
 The NASA APOD Gallery allows users to explore astronomy pictures provided by NASA. Users can fetch pictures for a selected date range, store the retrieved information in a SQL Server database, and browse previously saved pictures through a gallery interface.
 
 The application uses ADO.NET (SqlClient) to perform database operations, including inserting and retrieving records.
 
-## ✨ Features
+## Features
 
 - **NASA APOD API Integration** – Fetch astronomy pictures and metadata directly from NASA.
 - **Date Range Selection** – Retrieve pictures based on selected start and end dates.
@@ -33,7 +33,7 @@ The application uses ADO.NET (SqlClient) to perform database operations, includi
 | ADO.NET (SqlClient) | Database connectivity and operations |
 | NASA APOD API | Astronomy picture data source |
 
-## 🌌 NASA APOD API
+##  NASA APOD API
 
 This application uses NASA's Astronomy Picture of the Day API.
 
@@ -45,7 +45,7 @@ This application uses NASA's Astronomy Picture of the Day API.
 
 An API key is required to access the service. You can generate a free API key through NASA's API website.
 
-## ⚙️ Prerequisites
+## Prerequisites
 
 Before running the application, make sure you have installed:
 
@@ -54,7 +54,7 @@ Before running the application, make sure you have installed:
 - SQL Server or SQL Server Express
 - SQL Server Management Studio (SSMS)
 
-## 🚀 Installation and Setup
+## Installation and Setup
 
 ### 1. Clone the Repository
 
@@ -138,3 +138,5 @@ This repository contains:
 ## 📄 License
 
 This project was developed for educational purposes as part of a technical assignment.
+
+
