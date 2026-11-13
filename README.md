@@ -135,7 +135,7 @@ This repository contains:
 
 **Maneesha Karunarathna**
 
-## 📄 License
+## 📄 License & Purpose
 
-This project was developed for educational purposes as part of a technical assignment.
+This project was developed as a technical assessment assignment for an internship interview.
 
