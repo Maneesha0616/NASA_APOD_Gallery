@@ -16,7 +16,9 @@ public class NasaApodService : INasaApodService
         _httpClient = httpClient;
         _logger = logger;
 
-        _apiKey = configuration["NasaApi:ApiKey"]?.Trim() ?? "DEMO_KEY";
+        _apiKey = string.IsNullOrWhiteSpace(configuration["NasaApi:ApiKey"])
+            ? "DEMO_KEY"
+            : configuration["NasaApi:ApiKey"]!.Trim();
         _baseUrl = configuration["NasaApi:BaseUrl"]?.Trim() ?? "https://api.nasa.gov/planetary/apod";
     }
 

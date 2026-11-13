@@ -27,83 +27,92 @@ public class ApodRepository : IApodRepository
         int inserted = 0;
         int duplicates = 0;
 
+        // Single statement insert-and-guard: the UPDLOCK/HOLDLOCK hints serialise concurrent writers on the
+        // same Date range, so rows-affected is the only reliable signal for "inserted" versus "skipped".
         const string sql = @"
-            IF NOT EXISTS (SELECT 1 FROM [dbo].[ApodEntries] WHERE [Date] = @Date)
-            BEGIN
-                INSERT INTO [dbo].[ApodEntries] (
-                    [Date],
-                    [Title],
-                    [Explanation],
-                    [Url],
-                    [HdUrl],
-                    [MediaType],
-                    [ServiceVersion],
-                    [Copyright],
-                    [ThumbnailUrl],
-                    [SavedAt]
-                )
-                VALUES (
-                    @Date,
-                    @Title,
-                    @Explanation,
-                    @Url,
-                    @HdUrl,
-                    @MediaType,
-                    @ServiceVersion,
-                    @Copyright,
-                    @ThumbnailUrl,
-                    SYSUTCDATETIME()
-                );
-                SELECT 1; -- Inserted
-            END
-            ELSE
-            BEGIN
-                SELECT 0; -- Duplicate skipped
-            END";
+            INSERT INTO [dbo].[ApodEntries] (
+                [Date],
+                [Title],
+                [Explanation],
+                [Url],
+                [HdUrl],
+                [MediaType],
+                [ServiceVersion],
+                [Copyright],
+                [ThumbnailUrl],
+                [SavedAt]
+            )
+            SELECT @Date, @Title, @Explanation, @Url, @HdUrl, @MediaType, @ServiceVersion, @Copyright, @ThumbnailUrl, SYSUTCDATETIME()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM [dbo].[ApodEntries] WITH (UPDLOCK, HOLDLOCK) WHERE [Date] = @Date
+            );";
 
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
 
-        foreach (var entry in entries)
+        await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync();
+
+        try
         {
-            if (string.IsNullOrWhiteSpace(entry.Date))
+            foreach (var entry in entries)
             {
-                continue;
+                if (string.IsNullOrWhiteSpace(entry.Date))
+                {
+                    continue;
+                }
+
+                if (!DateTime.TryParseExact(entry.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate) &&
+                    !DateTime.TryParse(entry.Date, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
+                {
+                    _logger.LogWarning("Unable to parse APOD date '{Date}'. Skipping entry.", entry.Date);
+                    continue;
+                }
+
+                await using var command = new SqlCommand(sql, connection, transaction);
+
+                // Parameterized query parameters to prevent SQL injection and ensure type safety
+                command.Parameters.Add("@Date", SqlDbType.Date).Value = parsedDate.Date;
+                command.Parameters.Add("@Title", SqlDbType.NVarChar, 500).Value = Truncate(entry.Title, 500);
+                command.Parameters.Add("@Explanation", SqlDbType.NVarChar, -1).Value = (object?)entry.Explanation ?? DBNull.Value;
+                command.Parameters.Add("@Url", SqlDbType.NVarChar, 2048).Value = entry.Url ?? string.Empty;
+                command.Parameters.Add("@HdUrl", SqlDbType.NVarChar, 2048).Value = (object?)entry.HdUrl ?? DBNull.Value;
+                command.Parameters.Add("@MediaType", SqlDbType.NVarChar, 50).Value = string.IsNullOrWhiteSpace(entry.MediaType) ? "image" : entry.MediaType;
+                command.Parameters.Add("@ServiceVersion", SqlDbType.NVarChar, 50).Value = (object?)entry.ServiceVersion ?? DBNull.Value;
+                command.Parameters.Add("@Copyright", SqlDbType.NVarChar, 255).Value = (object?)Truncate(entry.Copyright, 255) ?? DBNull.Value;
+                command.Parameters.Add("@ThumbnailUrl", SqlDbType.NVarChar, 2048).Value = (object?)entry.ThumbnailUrl ?? DBNull.Value;
+
+                try
+                {
+                    var rowsAffected = await command.ExecuteNonQueryAsync();
+                    if (rowsAffected > 0)
+                    {
+                        inserted++;
+                    }
+                    else
+                    {
+                        duplicates++;
+                    }
+                }
+                catch (SqlException ex) when (IsUniqueViolation(ex))
+                {
+                    // The unique index on [Date] is the last line of defence; only the statement rolls back.
+                    _logger.LogWarning(ex, "Concurrent insert already stored APOD date '{Date}'.", entry.Date);
+                    duplicates++;
+                }
             }
 
-            if (!DateTime.TryParseExact(entry.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate) &&
-                !DateTime.TryParse(entry.Date, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
-            {
-                _logger.LogWarning("Unable to parse APOD date '{Date}'. Skipping entry.", entry.Date);
-                continue;
-            }
-
-            await using var command = new SqlCommand(sql, connection);
-
-            // Parameterized query parameters to prevent SQL injection and ensure type safety
-            command.Parameters.Add("@Date", SqlDbType.Date).Value = parsedDate.Date;
-            command.Parameters.Add("@Title", SqlDbType.NVarChar, 500).Value = Truncate(entry.Title, 500);
-            command.Parameters.Add("@Explanation", SqlDbType.NVarChar, -1).Value = (object?)entry.Explanation ?? DBNull.Value;
-            command.Parameters.Add("@Url", SqlDbType.NVarChar, 2048).Value = entry.Url ?? string.Empty;
-            command.Parameters.Add("@HdUrl", SqlDbType.NVarChar, 2048).Value = (object?)entry.HdUrl ?? DBNull.Value;
-            command.Parameters.Add("@MediaType", SqlDbType.NVarChar, 50).Value = string.IsNullOrWhiteSpace(entry.MediaType) ? "image" : entry.MediaType;
-            command.Parameters.Add("@ServiceVersion", SqlDbType.NVarChar, 50).Value = (object?)entry.ServiceVersion ?? DBNull.Value;
-            command.Parameters.Add("@Copyright", SqlDbType.NVarChar, 255).Value = (object?)Truncate(entry.Copyright, 255) ?? DBNull.Value;
-            command.Parameters.Add("@ThumbnailUrl", SqlDbType.NVarChar, 2048).Value = (object?)entry.ThumbnailUrl ?? DBNull.Value;
-
-            var result = await command.ExecuteScalarAsync();
-            if (result != null && Convert.ToInt32(result) == 1)
-            {
-                inserted++;
-            }
-            else
-            {
-                duplicates++;
-            }
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
         }
 
         return (inserted, duplicates);
     }
+
+    private static bool IsUniqueViolation(SqlException ex) => ex.Number is 2601 or 2627;
 
     /// <summary>
     /// Retrieves all saved APOD records from the database using ADO.NET and maps them into domain objects.

@@ -61,7 +61,7 @@ Ensure the following tools are installed on your workstation:
 1. **.NET SDK** (.NET 10, .NET 8, or .NET 7 SDK)
    - Verify with: `dotnet --version`
 2. **Microsoft SQL Server**, **SQL Server Express**, or **LocalDB** (included with Visual Studio)
-   - Default connection string targets `(localdb)\mssqllocaldb`.
+   - Default connection string targets `.\SQLEXPRESS`. Point `ConnectionStrings:DefaultConnection` at your own instance if it differs.
 3. **IDE / Editor**: Visual Studio 2022 / 2025, Visual Studio Code, or JetBrains Rider.
 
 ---
@@ -89,31 +89,50 @@ Or open [`Database/CreateDatabase.sql`](Database/CreateDatabase.sql) in **SQL Se
 
 ### 2. NASA API Key Configuration
 
-The application uses NASA's default `DEMO_KEY` by default, which works immediately out of the box.
+The repository ships with NASA's shared `DEMO_KEY`, so the application runs immediately without any configuration. `DEMO_KEY` is rate-limited (30 requests/hour, 50 requests/day per IP), which is enough for demos but shared with everyone else.
 
-#### Getting a Free NASA API Key (Recommended for higher rate limits):
+#### Getting a Free Personal API Key (Recommended):
 1. Visit [https://api.nasa.gov](https://api.nasa.gov).
 2. Fill out the "Generate API Key" form (First Name, Last Name, Email).
 3. Copy your personal API key.
 
 #### Setting the API Key:
-Open [`appsettings.json`](appsettings.json) and set your key:
+**Never commit a personal API key.** Store it in the local developer secret store, which lives outside the project folder and is never added to Git:
+
+```powershell
+cd "c:\Users\User\Desktop\NASA_APOD_Gallery"
+dotnet user-secrets set "NasaApi:ApiKey" "YOUR_NASA_API_KEY_HERE"
+```
+
+Verify it was saved (values are masked):
+```powershell
+dotnet user-secrets list
+```
+
+The project already carries a `UserSecretsId` in [NasaApodGallery.csproj](NasaApodGallery.csproj), so `dotnet run` in Development picks the secret up automatically. If you prefer an environment variable instead, it works without secrets:
+
+```powershell
+$env:NasaApi__ApiKey = "YOUR_NASA_API_KEY_HERE"
+```
+
+To change the endpoint or fall back to the shared demo key:
+
+```powershell
+dotnet user-secrets set "NasaApi:ApiKey" "DEMO_KEY"
+```
+
+`appsettings.json` holds only the placeholder and the base URL:
 
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=NasaApodDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;"
+    "DefaultConnection": "Server=.\\SQLEXPRESS;Database=NasaApodDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;"
   },
   "NasaApi": {
-    "ApiKey": "YOUR_NASA_API_KEY_HERE",
+    "ApiKey": "DEMO_KEY",
     "BaseUrl": "https://api.nasa.gov/planetary/apod"
   }
 }
-```
-
-*Alternative (Environment Variable):*
-```powershell
-$env:NasaApi__ApiKey = "YOUR_NASA_API_KEY_HERE"
 ```
 
 ---
@@ -122,7 +141,7 @@ $env:NasaApi__ApiKey = "YOUR_NASA_API_KEY_HERE"
 
 1. Open your terminal in the project directory:
    ```powershell
-   cd c:\Users\User\Desktop\impact
+   cd "c:\Users\User\Desktop\NASA_APOD_Gallery"
    ```
 
 2. Restore packages and build:
@@ -146,7 +165,7 @@ $env:NasaApi__ApiKey = "YOUR_NASA_API_KEY_HERE"
 
 ```
 ├── Controllers/
-│   └── HomeController.cs             # Index (Gallery), Fetch, QuickFetch, Details, About
+│   └── HomeController.cs             # Index (Gallery), Fetch, QuickFetch, Details, ImageProxy, Privacy
 ├── DTOs/
 │   └── NasaApodDto.cs                # JSON deserialization model matching NASA API properties
 ├── Models/
@@ -197,26 +216,35 @@ All database interactions follow strict ADO.NET guidelines using `Microsoft.Data
 - **Mapping**: `SqlDataReader` reads rows directly into `ApodEntry` instances.
 
 ### Duplicate Prevention
-When saving a fetched batch:
+The whole fetched batch is written inside a single ADO.NET transaction, and each entry uses one
+insert-and-guard statement:
+
 ```sql
-IF NOT EXISTS (SELECT 1 FROM [dbo].[ApodEntries] WHERE [Date] = @Date)
-BEGIN
-    INSERT INTO [dbo].[ApodEntries] (
-        [Date], [Title], [Explanation], [Url], [HdUrl], 
-        [MediaType], [ServiceVersion], [Copyright], [ThumbnailUrl], [SavedAt]
-    )
-    VALUES (
-        @Date, @Title, @Explanation, @Url, @HdUrl, 
-        @MediaType, @ServiceVersion, @Copyright, @ThumbnailUrl, SYSUTCDATETIME()
-    );
-    SELECT 1; -- Inserted
-END
-ELSE
-BEGIN
-    SELECT 0; -- Duplicate skipped
-END
+INSERT INTO [dbo].[ApodEntries] (
+    [Date], [Title], [Explanation], [Url], [HdUrl],
+    [MediaType], [ServiceVersion], [Copyright], [ThumbnailUrl], [SavedAt]
+)
+SELECT @Date, @Title, @Explanation, @Url, @HdUrl,
+       @MediaType, @ServiceVersion, @Copyright, @ThumbnailUrl, SYSUTCDATETIME()
+WHERE NOT EXISTS (
+    SELECT 1 FROM [dbo].[ApodEntries] WITH (UPDLOCK, HOLDLOCK) WHERE [Date] = @Date
+);
 ```
-In addition, a unique constraint `CONSTRAINT [UQ_ApodEntries_Date] UNIQUE NONCLUSTERED ([Date] ASC)` guarantees database-level integrity.
+
+- `UPDLOCK, HOLDLOCK` makes the existence check and the insert one atomic critical section, so two
+  concurrent fetches of the same date cannot both pass the check.
+- Rows-affected from the single statement is the insert/skip signal (`1` = inserted, `0` = duplicate).
+- If a violation still slips through, `SqlException` numbers 2601/2627 are caught per row and counted as a
+  duplicate rather than failing the batch; only the offending statement rolls back.
+- The database-level guarantee remains the unique index:
+  `CONSTRAINT [UQ_ApodEntries_Date] UNIQUE NONCLUSTERED ([Date] ASC)`.
+
+### Image Proxy
+NASA's image servers apply hotlink protection, so gallery thumbnails are streamed through
+`/Home/ImageProxy?url={origin}`. The endpoint reuses a named `IHttpClientFactory` client (`ApodImageProxy`)
+instead of creating a socket per request, follows redirects manually so every hop is re-validated, serves
+only `image/*` content types up to 25 MB, and refuses loopback, private, link-local, and reserved
+addresses so it cannot be used to reach the host network.
 
 ### Responsive Gallery View
 - Modern CSS grid with Bootstrap breakpoints (`col-12 col-sm-6 col-md-4 col-lg-3`).

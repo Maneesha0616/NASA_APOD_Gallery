@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
 using Microsoft.AspNetCore.Mvc;
 using NasaApodGallery.Data;
 using NasaApodGallery.Models;
@@ -8,17 +10,25 @@ namespace NasaApodGallery.Controllers;
 
 public class HomeController : Controller
 {
+    public const string ImageProxyClientName = "ApodImageProxy";
+
+    private const int MaxImageProxyRedirects = 3;
+    private const long MaxImageProxyBytes = 25 * 1024 * 1024;
+
     private readonly INasaApodService _nasaApodService;
     private readonly IApodRepository _apodRepository;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<HomeController> _logger;
 
     public HomeController(
         INasaApodService nasaApodService,
         IApodRepository apodRepository,
+        IHttpClientFactory httpClientFactory,
         ILogger<HomeController> logger)
     {
         _nasaApodService = nasaApodService;
         _apodRepository = apodRepository;
+        _httpClientFactory = httpClientFactory;
         _logger = logger;
     }
 
@@ -63,7 +73,7 @@ public class HomeController : Controller
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Fetch(FetchRequestViewModel model)
+    public async Task<IActionResult> Fetch([Bind(Prefix = "FetchRequest")] FetchRequestViewModel model)
     {
         if (!ModelState.IsValid)
         {
@@ -158,30 +168,157 @@ public class HomeController : Controller
     [ResponseCache(Duration = 86400, Location = ResponseCacheLocation.Client)]
     public async Task<IActionResult> ImageProxy([FromQuery] string url)
     {
-        if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        var target = await ResolveSafeImageTargetAsync(url);
+        if (target is null)
         {
-            return NotFound();
+            return BadRequest();
         }
 
-        try
+        var client = _httpClientFactory.CreateClient(ImageProxyClientName);
+
+        for (var hop = 0; hop <= MaxImageProxyRedirects; hop++)
         {
-            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
-            var response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);
-            if (!response.IsSuccessStatusCode)
+            HttpResponseMessage response;
+            try
             {
-                return Redirect(url);
+                // Referer set to the image's own origin so hotlink protection on apod.nasa.gov passes.
+                using var request = new HttpRequestMessage(HttpMethod.Get, target);
+                request.Headers.Referrer = new Uri($"{target.Scheme}://{target.Host}/");
+
+                response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+            {
+                _logger.LogWarning(ex, "ImageProxy could not reach {Url}", target);
+                return NotFound();
             }
 
-            var contentType = response.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
-            var stream = await response.Content.ReadAsStreamAsync();
-            return File(stream, contentType);
+            using (response)
+            {
+                if (IsRedirect(response.StatusCode) && response.Headers.Location is not null)
+                {
+                    // Re-validate the redirect target so an approved host cannot bounce the request internally.
+                    var redirect = await ResolveSafeImageTargetAsync(new Uri(target, response.Headers.Location).ToString());
+                    if (redirect is null)
+                    {
+                        return BadRequest();
+                    }
+
+                    target = redirect;
+                    continue;
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("ImageProxy: origin returned {Status} for {Url}", response.StatusCode, target);
+                    return NotFound();
+                }
+
+                var contentType = response.Content.Headers.ContentType?.MediaType;
+                if (contentType is null || !contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning("ImageProxy: refusing non-image content type '{ContentType}' from {Url}", contentType, target);
+                    return NotFound();
+                }
+
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                if (bytes.Length == 0)
+                {
+                    return NotFound();
+                }
+
+                if (bytes.Length > MaxImageProxyBytes)
+                {
+                    _logger.LogWarning("ImageProxy: payload of {Bytes} bytes exceeds limit for {Url}", bytes.Length, target);
+                    return StatusCode(StatusCodes.Status413PayloadTooLarge);
+                }
+
+                return File(bytes, contentType);
+            }
         }
-        catch (Exception ex)
+
+        _logger.LogWarning("ImageProxy: redirect limit reached for {Url}", url);
+        return NotFound();
+    }
+
+    private static bool IsRedirect(HttpStatusCode statusCode) =>
+        statusCode is HttpStatusCode.Moved
+            or HttpStatusCode.Found
+            or HttpStatusCode.RedirectMethod
+            or HttpStatusCode.TemporaryRedirect
+            or HttpStatusCode.PermanentRedirect;
+
+    /// <summary>
+    /// Confirms the proxy target is a public http/https URL, so the endpoint cannot be used to reach
+    /// loopback, private, link-local, or otherwise reserved addresses on the host network.
+    /// Returns null when the URL must not be fetched.
+    /// </summary>
+    private static async Task<Uri?> ResolveSafeImageTargetAsync(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url, UriKind.Absolute, out var candidate))
         {
-            _logger.LogWarning(ex, "Failed to proxy image: {Url}", url);
-            return Redirect(url);
+            return null;
         }
+
+        if (candidate.Scheme != Uri.UriSchemeHttp && candidate.Scheme != Uri.UriSchemeHttps)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrEmpty(candidate.Host))
+        {
+            return null;
+        }
+
+        IPAddress[] addresses;
+        try
+        {
+            addresses = await Dns.GetHostAddressesAsync(candidate.Host);
+        }
+        catch (Exception ex) when (ex is SocketException or InvalidOperationException)
+        {
+            return null;
+        }
+
+        if (addresses.Length == 0 || addresses.Any(IsBlockedAddress))
+        {
+            return null;
+        }
+
+        return candidate;
+    }
+
+    private static bool IsBlockedAddress(IPAddress address)
+    {
+        if (address.IsIPv4MappedToIPv6)
+        {
+            address = address.MapToIPv4();
+        }
+
+        var bytes = address.GetAddressBytes();
+
+        if (address.AddressFamily == AddressFamily.InterNetworkV6)
+        {
+            if (IPAddress.IsLoopback(address)) return true;
+            if (bytes.All(b => b == 0)) return true;                  // :: unspecified
+            if (bytes[0] == 0xFE && (bytes[1] & 0xC0) == 0x80) return true; // fe80::/10 link-local
+            return (bytes[0] & 0xFE) == 0xFC || bytes[0] >= 0xFF;    // fc00::/7 unique-local, ff00::/8 multicast
+        }
+
+        if (IPAddress.IsLoopback(address)) return true;
+
+        return bytes[0] switch
+        {
+            0 or 10 or 127 => true,                          // this-network, RFC1918, loopback
+            100 => bytes[1] >= 64 && bytes[1] <= 127,        // carrier-grade NAT
+            169 => bytes[1] == 254,                          // link-local
+            172 => bytes[1] >= 16 && bytes[1] <= 31,         // RFC1918
+            192 => bytes[1] == 168 || (bytes[1] == 0 && bytes[2] is 0 or 2), // private, IETF, TEST-NET-1
+            198 => bytes[1] is 18 or 19 || (bytes[1] == 51 && bytes[2] == 100), // benchmarking, TEST-NET-2
+            203 => bytes[1] == 0 && bytes[2] == 114,         // TEST-NET-3
+            >= 224 => true,                                  // multicast and reserved
+            _ => false
+        };
     }
 
     public IActionResult Privacy()
