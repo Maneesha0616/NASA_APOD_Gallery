@@ -54,21 +54,30 @@ document.addEventListener('DOMContentLoaded', function () {
             const mediaContainer = document.getElementById('modalMediaContainer');
             mediaContainer.innerHTML = '';
 
+            // Force HTTPS to prevent mixed-content blocks on HTTPS pages
+            const safeUrl = url.replace(/^http:\/\//i, 'https://');
+            const safeHdUrl = hdUrl.replace(/^http:\/\//i, 'https://');
+
             if (mediaType === 'video') {
                 mediaContainer.innerHTML = `
                     <div class="ratio ratio-16x9">
-                        <iframe src="${url}" title="${title}" allowfullscreen></iframe>
+                        <iframe src="${safeUrl}" title="${title}" allowfullscreen></iframe>
                     </div>`;
             } else {
                 mediaContainer.innerHTML = `
                     <div class="text-center bg-black rounded p-2">
-                        <img src="${url}" alt="${title}" class="img-fluid rounded" style="max-height: 480px; object-fit: contain;">
+                        <img src="${safeUrl}"
+                             alt="${title}"
+                             class="img-fluid rounded"
+                             referrerpolicy="no-referrer"
+                             style="max-height: 480px; object-fit: contain;"
+                             onerror="this.style.opacity='0.3';">
                     </div>`;
             }
 
             const hdBtn = document.getElementById('modalHdBtn');
-            if (hdUrl && hdUrl.trim() !== '') {
-                hdBtn.href = hdUrl;
+            if (safeHdUrl && safeHdUrl.trim() !== '') {
+                hdBtn.href = safeHdUrl;
                 hdBtn.style.display = 'inline-flex';
             } else {
                 hdBtn.style.display = 'none';

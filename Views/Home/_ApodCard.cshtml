@@ -4,12 +4,11 @@
     <div class="card apod-card w-100 h-100 shadow-sm d-flex flex-column">
         <!-- Media / Image Block -->
         <div class="apod-card-image-wrapper">
-            <img src="@(Model.IsVideo ? Model.DisplayImageUrl : Url.Action("ImageProxy", "Home", new { url = Model.DisplayImageUrl }))"
+            <img src="@(Model.IsImage ? Url.Action("ImageProxy", "Home", new { url = Model.DisplayImageUrl.Replace("http://", "https://") }) : Model.DisplayImageUrl)"
                  alt="@Model.Title"
                  class="apod-card-img"
-                 referrerpolicy="no-referrer"
                  loading="lazy"
-                 onerror="this.onerror=null; this.src='@Model.DisplayImageUrl';" />
+                 onerror="this.onerror=null; this.classList.add('img-error');" />
 
             @if (Model.IsVideo)
             {

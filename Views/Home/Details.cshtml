@@ -49,12 +49,10 @@
             else
             {
                 <div class="apod-details-image-container shadow-lg">
-                    <img src="@(Model.IsVideo ? Model.DisplayImageUrl : Url.Action("ImageProxy", "Home", new { url = Model.DisplayImageUrl }))"
+                    <img src="@Url.Action("ImageProxy", "Home", new { url = Model.DisplayImageUrl.Replace("http://", "https://") })"
                          alt="@Model.Title"
                          class="img-fluid"
-                         referrerpolicy="no-referrer"
-                         loading="lazy"
-                         onerror="this.onerror=null; this.src='@Model.DisplayImageUrl';" />
+                         loading="lazy" />
                 </div>
             }
         </div>
