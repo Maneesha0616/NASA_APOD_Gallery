@@ -9,11 +9,23 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!startDateInput || !endDateInput) return;
 
         const end = new Date();
-        const start = new Date();
+        const start = new Date(end);
         start.setDate(end.getDate() - days);
 
         endDateInput.value = formatDate(end);
         startDateInput.value = formatDate(start);
+
+        // Auto-submit the fetch form
+        const form = startDateInput.closest('form');
+        if (form) form.submit();
+    };
+
+    window.setPresetDates = function (startStr, endStr) {
+        if (!startDateInput || !endDateInput) return;
+        startDateInput.value = startStr;
+        endDateInput.value = endStr;
+        const form = startDateInput.closest('form');
+        if (form) form.submit();
     };
 
     function formatDate(date) {
@@ -58,29 +70,24 @@ document.addEventListener('DOMContentLoaded', function () {
             const safeUrl = url.replace(/^http:\/\//i, 'https://');
             const safeHdUrl = hdUrl.replace(/^http:\/\//i, 'https://');
 
-            if (mediaType === 'video') {
-                mediaContainer.innerHTML = `
-                    <div class="ratio ratio-16x9">
-                        <iframe src="${safeUrl}" title="${title}" allowfullscreen></iframe>
-                    </div>`;
-            } else {
-                mediaContainer.innerHTML = `
-                    <div class="text-center bg-black rounded p-2">
-                        <img src="${safeUrl}"
-                             alt="${title}"
-                             class="img-fluid rounded"
-                             referrerpolicy="no-referrer"
-                             style="max-height: 480px; object-fit: contain;"
-                             onerror="this.style.opacity='0.3';">
-                    </div>`;
-            }
+            mediaContainer.innerHTML = `
+                <div class="text-center bg-black rounded p-2">
+                    <img src="${safeUrl}"
+                         alt="${title}"
+                         class="img-fluid rounded"
+                         loading="lazy"
+                         referrerpolicy="no-referrer"
+                         style="max-height: 480px; object-fit: contain;">
+                </div>`;
 
             const hdBtn = document.getElementById('modalHdBtn');
-            if (safeHdUrl && safeHdUrl.trim() !== '') {
-                hdBtn.href = safeHdUrl;
-                hdBtn.style.display = 'inline-flex';
-            } else {
-                hdBtn.style.display = 'none';
+            if (hdBtn) {
+                if (safeHdUrl && safeHdUrl.trim() !== '') {
+                    hdBtn.href = safeHdUrl;
+                    hdBtn.style.display = 'inline-flex';
+                } else {
+                    hdBtn.style.display = 'none';
+                }
             }
 
             const pageLink = document.getElementById('modalFullPageLink');

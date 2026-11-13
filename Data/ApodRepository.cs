@@ -61,6 +61,15 @@ public class ApodRepository : IApodRepository
                     continue;
                 }
 
+                // Strictly filter for image media type according to assignment instructions
+                if (!string.Equals(entry.MediaType, "image", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(entry.Title, "NASA Science", StringComparison.OrdinalIgnoreCase) ||
+                    (entry.Url != null && entry.Url.Contains("nasa-logo", StringComparison.OrdinalIgnoreCase)))
+                {
+                    _logger.LogInformation("Skipping non-image or placeholder entry ({Title}) for date {Date}.", entry.Title, entry.Date);
+                    continue;
+                }
+
                 if (!DateTime.TryParseExact(entry.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate) &&
                     !DateTime.TryParse(entry.Date, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
                 {

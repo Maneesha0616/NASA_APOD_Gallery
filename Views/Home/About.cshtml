@@ -1,0 +1,112 @@
+@{
+    ViewData["Title"] = "About the Cosmos";
+}
+
+<!-- Hero Header -->
+<div class="text-center pt-4 pb-3 mb-4">
+    <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25);">
+        <i class="bi bi-stars text-info small"></i>
+        <span class="text-info small fw-semibold text-uppercase" style="letter-spacing: 0.08em;">NASA Open Science</span>
+    </div>
+    <h1 class="display-4 fw-bold text-light mb-2 text-glow">
+        About <span style="background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">APOD Gallery</span>
+    </h1>
+    <p class="lead text-secondary mx-auto" style="max-width: 650px;">
+        Discovering the cosmos every day through NASA's Astronomy Picture of the Day — bridging distant galaxies and deep space wonders with curious minds on Earth.
+    </p>
+</div>
+
+<!-- Mission & Story -->
+<div class="row g-4 mb-5">
+    <div class="col-lg-4 d-flex">
+        <div class="card w-100 p-4 border border-secondary border-opacity-25 rounded-4 shadow-sm" style="background: rgba(20, 27, 45, 0.6); backdrop-filter: blur(12px);">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 50px; height: 50px; background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-size: 1.5rem;">
+                <i class="bi bi-telescope"></i>
+            </div>
+            <h4 class="text-light fw-bold mb-2">What is APOD?</h4>
+            <p class="text-secondary small leading-relaxed mb-0">
+                Created in 1995 by NASA astrophysicists Robert Nemiroff and Jerry Bonnell, the <strong>Astronomy Picture of the Day</strong> is one of NASA's most beloved and enduring traditions. Every day features a distinct image or photograph of our fascinating universe.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-lg-4 d-flex">
+        <div class="card w-100 p-4 border border-secondary border-opacity-25 rounded-4 shadow-sm" style="background: rgba(20, 27, 45, 0.6); backdrop-filter: blur(12px);">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 50px; height: 50px; background: rgba(129, 140, 248, 0.12); color: #818cf8; font-size: 1.5rem;">
+                <i class="bi bi-book"></i>
+            </div>
+            <h4 class="text-light fw-bold mb-2">Astronomer Insights</h4>
+            <p class="text-secondary small leading-relaxed mb-0">
+                Every picture is accompanied by a concise, authoritative explanation written by professional astronomers. It delivers real astrophysical science in accessible, captivating language for astronomy lovers of all ages.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-lg-4 d-flex">
+        <div class="card w-100 p-4 border border-secondary border-opacity-25 rounded-4 shadow-sm" style="background: rgba(20, 27, 45, 0.6); backdrop-filter: blur(12px);">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 50px; height: 50px; background: rgba(16, 185, 129, 0.12); color: #10b981; font-size: 1.5rem;">
+                <i class="bi bi-globe-americas"></i>
+            </div>
+            <h4 class="text-light fw-bold mb-2">NASA Open APIs</h4>
+            <p class="text-secondary small leading-relaxed mb-0">
+                All data, scientific descriptions, and imagery are retrieved directly from NASA's official Open Data platform. This initiative ensures public domain science and space research remain transparent and accessible worldwide.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Observatories Grid -->
+<div class="card p-4 p-md-5 mb-5 border border-secondary border-opacity-25 rounded-4 shadow-lg" style="background: linear-gradient(135deg, rgba(20, 27, 45, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);">
+    <div class="text-center mb-4">
+        <h3 class="text-light fw-bold mb-2">Eyes on the Universe</h3>
+        <p class="text-secondary small mx-auto" style="max-width: 500px;">
+            The photographs featured in the gallery originate from humanity's premier scientific observatories and skilled astrophotographers.
+        </p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06);">
+                <div class="d-flex align-items-center gap-2 mb-2 text-info">
+                    <i class="bi bi-hexagon-fill"></i>
+                    <h5 class="mb-0 fw-semibold text-light">James Webb (JWST)</h5>
+                </div>
+                <p class="text-secondary small mb-0">
+                    Operating at Lagrange Point 2, Webb captures infrared views of cosmic dust clouds, newborn stars, and primordial galaxies billions of light-years away.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06);">
+                <div class="d-flex align-items-center gap-2 mb-2" style="color: #818cf8;">
+                    <i class="bi bi-broadcast-pin"></i>
+                    <h5 class="mb-0 fw-semibold text-light">Hubble Space Telescope</h5>
+                </div>
+                <p class="text-secondary small mb-0">
+                    Orbiting Earth since 1990, Hubble continues to deliver iconic high-definition optical imagery of starburst galaxies, nebulae, and planetary systems.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06);">
+                <div class="d-flex align-items-center gap-2 mb-2" style="color: #38bdf8;">
+                    <i class="bi bi-camera-fill"></i>
+                    <h5 class="mb-0 fw-semibold text-light">Global Astrophotography</h5>
+                </div>
+                <p class="text-secondary small mb-0">
+                    Featuring breathtaking sky captures, eclipses, meteors, and nightscapes submitted by world-class astronomers and astrophotographers across the globe.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Return CTA -->
+<div class="text-center py-4">
+    <a asp-controller="Home" asp-action="Index" class="btn btn-sm px-4 py-2 rounded-pill fw-semibold shadow" style="background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%); color: #020617; border: none;">
+        <i class="bi bi-grid-3x3-gap-fill me-1"></i> Return to Cosmic Gallery
+    </a>
+</div>
+

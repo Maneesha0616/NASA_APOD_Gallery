@@ -29,7 +29,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Privacy" ? "active text-info fw-semibold" : "")" asp-controller="Home" asp-action="Privacy">
+                            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "About" || ViewContext.RouteData.Values["action"]?.ToString() == "Privacy" ? "active text-info fw-semibold" : "")" asp-controller="Home" asp-action="About">
                                 <i class="bi bi-info-circle-fill me-1"></i> About
                             </a>
                         </li>
@@ -91,13 +91,11 @@
         <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
                 <span class="fw-semibold">Astronomy Picture of the Day (APOD) Gallery</span>
-                <span class="mx-2">•</span>
-                <span class="text-secondary small">Built with ASP.NET Core MVC &amp; ADO.NET SqlClient</span>
             </div>
             <div class="small">
                 <span>NASA Open Data</span>
                 <span class="mx-2">•</span>
-                <a asp-controller="Home" asp-action="Privacy" class="text-info text-decoration-none">About</a>
+                <a asp-controller="Home" asp-action="About" class="text-info text-decoration-none">About</a>
             </div>
         </div>
     </footer>

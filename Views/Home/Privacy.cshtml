@@ -1,50 +1,5 @@
 @{
-    ViewData["Title"] = "About & Architecture";
+    ViewData["Title"] = "About the Cosmos";
 }
 
-<div class="row">
-    <div class="col-lg-10 mx-auto">
-        <h2 class="display-6 fw-bold text-light mb-4">
-            <i class="bi bi-info-circle-fill text-info me-2"></i>About NASA APOD Gallery
-        </h2>
-
-        <div class="card bg-dark bg-opacity-75 border border-secondary border-opacity-50 p-4 mb-4 rounded-4 shadow-sm">
-            <h4 class="text-info mb-3">Project Overview</h4>
-            <p class="text-light text-opacity-90 leading-relaxed">
-                This ASP.NET Core MVC application integrates with the official <strong>NASA Astronomy Picture of the Day (APOD) REST API</strong>.
-                Users can query celestial photos, videos, and scientific descriptions across date ranges. All fetched data is deserialized from JSON
-                and persisted in Microsoft SQL Server using low-level <strong>ADO.NET (Microsoft.Data.SqlClient)</strong> with raw parameterized queries, ensuring zero duplicate entries.
-            </p>
-        </div>
-
-        <div class="card bg-dark bg-opacity-75 border border-secondary border-opacity-50 p-4 mb-4 rounded-4 shadow-sm">
-            <h4 class="text-info mb-3">Key Technical Implementation Details</h4>
-            <ul class="list-group list-group-flush bg-transparent">
-                <li class="list-group-item bg-transparent text-light border-secondary border-opacity-25 py-3">
-                    <strong>1. NASA APOD API Consumption:</strong>
-                    <div class="text-secondary small mt-1">
-                        Utilizes <code>HttpClient</code> factory configured with base URL <code>https://api.nasa.gov/planetary/apod</code> and query parameters (<code>start_date</code>, <code>end_date</code>, <code>thumbs=true</code>, and <code>api_key</code>). Returns a JSON array deserialized into strong C# DTOs (<code>NasaApodDto</code>).
-                    </div>
-                </li>
-                <li class="list-group-item bg-transparent text-light border-secondary border-opacity-25 py-3">
-                    <strong>2. ADO.NET Data Persistence (SqlClient):</strong>
-                    <div class="text-secondary small mt-1">
-                        Direct ADO.NET implementation using <code>SqlConnection</code>, <code>SqlCommand</code>, and <code>SqlParameter</code>. Prevents duplicate entries on <code>[Date]</code> using atomic <code>IF NOT EXISTS (...) INSERT ...</code> SQL scripts and indexed unique date constraints.
-                    </div>
-                </li>
-                <li class="list-group-item bg-transparent text-light border-secondary border-opacity-25 py-3">
-                    <strong>3. Data Retrieval &amp; Mapping:</strong>
-                    <div class="text-secondary small mt-1">
-                        Uses <code>SqlDataReader</code> to stream rows from SQL Server into clean domain model objects (<code>ApodEntry</code>) rendered by Razor Views with keyword search and media type filtering.
-                    </div>
-                </li>
-                <li class="list-group-item bg-transparent text-light border-secondary border-opacity-25 py-3">
-                    <strong>4. Responsive Gallery UI:</strong>
-                    <div class="text-secondary small mt-1">
-                        Built with Bootstrap 5, responsive CSS grid, card hover animations, preview modals, and full-resolution media views with both image and embedded video support.
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </div>
-</div>
+<partial name="About" />

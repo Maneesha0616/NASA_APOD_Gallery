@@ -3,117 +3,76 @@
     ViewData["Title"] = "Cosmic Gallery";
 }
 
-<div class="row mb-4">
-    <div class="col-12 text-center py-3">
-        <h1 class="display-5 fw-bold text-light mb-2">
-            <i class="bi bi-stars text-info me-2"></i>Astronomy Picture of the Day
-        </h1>
-        <p class="lead text-secondary mb-0">
-            Explore the cosmos through NASA's APOD API, persisted in SQL Server via ADO.NET.
-        </p>
+<!-- Hero Title -->
+<div class="text-center pt-3 pb-2 mb-2">
+    <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-2" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25);">
+        <i class="bi bi-stars text-info small"></i>
+        <span class="text-info small fw-semibold text-uppercase" style="letter-spacing: 0.06em;">NASA Astronomy Picture of the Day</span>
     </div>
+    <h1 class="display-4 fw-bold text-light mb-1 text-glow">
+        Astronomy <span class="text-gradient">Gallery</span>
+    </h1>
 </div>
 
-<!-- NASA API Fetch Panel -->
-<div class="card control-panel p-4 mb-4">
-    <div class="row align-items-center">
-        <div class="col-lg-7 mb-3 mb-lg-0">
-            <h5 class="card-title text-info mb-2 d-flex align-items-center gap-2">
-                <i class="bi bi-cloud-arrow-down-fill"></i> Fetch APOD from NASA API
-            </h5>
-            <p class="text-secondary small mb-3">
-                Select a date range to download astronomy photos and metadata directly from NASA's REST API. 
-                New entries are stored in SQL Server; existing entries are skipped to prevent duplicates.
-            </p>
-
-            <form asp-controller="Home" asp-action="Fetch" method="post" class="row g-2 align-items-end">
-                @Html.AntiForgeryToken()
-                <div class="col-sm-5">
-                    <label asp-for="FetchRequest.StartDate" class="form-label text-light small fw-semibold">Start Date</label>
-                    <input asp-for="FetchRequest.StartDate" class="form-control form-control-sm bg-dark text-light border-secondary" type="date" id="fetchStartDate" max="@DateTime.Today.ToString("yyyy-MM-dd")" required />
-                    <span asp-validation-for="FetchRequest.StartDate" class="text-danger small"></span>
+<!-- ===================================================================
+     Clean Sticky Bar: Search & Inline Fetch
+     =================================================================== -->
+<div class="sticky-control-deck p-3 mb-4">
+    <div class="row g-2 align-items-center">
+        <!-- Live Search & Sort -->
+        <div class="col-lg-5">
+            <form asp-controller="Home" asp-action="Index" method="get" class="row g-2 align-items-center">
+                <div class="col-7">
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="search" value="@Model.SearchTerm" class="form-control form-control-sm glass-input" placeholder="Search title or nebula..." />
+                        <button type="submit" class="btn btn-sm btn-outline-info" title="Search">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="col-sm-5">
-                    <label asp-for="FetchRequest.EndDate" class="form-label text-light small fw-semibold">End Date</label>
-                    <input asp-for="FetchRequest.EndDate" class="form-control form-control-sm bg-dark text-light border-secondary" type="date" id="fetchEndDate" max="@DateTime.Today.ToString("yyyy-MM-dd")" required />
-                    <span asp-validation-for="FetchRequest.EndDate" class="text-danger small"></span>
-                </div>
-                <div class="col-sm-2">
-                    <button type="submit" class="btn btn-info btn-sm w-100 fw-semibold text-dark shadow-sm">
-                        <i class="bi bi-download me-1"></i> Fetch
-                    </button>
+                <div class="col-5 d-flex gap-1">
+                    <select name="sort" class="form-select form-select-sm glass-input" onchange="this.form.submit()">
+                        <option value="desc" selected="@(Model.SortOrder == "desc" || string.IsNullOrEmpty(Model.SortOrder))">Newest</option>
+                        <option value="asc" selected="@(Model.SortOrder == "asc")">Oldest</option>
+                    </select>
+                    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || Model.SortOrder == "asc")
+                    {
+                        <a asp-action="Index" class="btn btn-sm btn-outline-secondary d-flex align-items-center" title="Reset Search and Sort">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    }
                 </div>
             </form>
         </div>
 
-        <div class="col-lg-5 ps-lg-4 border-start border-secondary border-opacity-25">
-            <label class="form-label text-light small fw-semibold mb-2">Quick Presets</label>
-            <div class="d-flex flex-wrap gap-2 mb-3">
-                <button type="button" class="btn btn-outline-secondary btn-sm text-light" onclick="setPresetRange(7)">
-                    <i class="bi bi-clock-history me-1"></i> Last 7 Days
-                </button>
-                <button type="button" class="btn btn-outline-secondary btn-sm text-light" onclick="setPresetRange(14)">
-                    <i class="bi bi-clock-history me-1"></i> Last 14 Days
-                </button>
-                <button type="button" class="btn btn-outline-secondary btn-sm text-light" onclick="setPresetRange(30)">
-                    <i class="bi bi-clock-history me-1"></i> Last 30 Days
-                </button>
-            </div>
-            <div class="d-flex align-items-center justify-content-between p-2 rounded bg-black bg-opacity-25 border border-secondary border-opacity-25">
-                <span class="text-secondary small">Total In Database:</span>
-                <span class="badge bg-info text-dark fs-6 px-3 py-1">@Model.TotalSavedCount Pictures</span>
-            </div>
+        <!-- Inline Date Fetcher -->
+        <div class="col-lg-7">
+            <form asp-controller="Home" asp-action="Fetch" method="post" class="row g-2 align-items-center justify-content-lg-end">
+                @Html.AntiForgeryToken()
+                <div class="col-auto">
+                    <input asp-for="FetchRequest.StartDate" class="form-control form-control-sm glass-input text-center" style="width: 135px;" type="date" id="fetchStartDate" max="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                </div>
+                <div class="col-auto text-secondary small">→</div>
+                <div class="col-auto">
+                    <input asp-for="FetchRequest.EndDate" class="form-control form-control-sm glass-input text-center" style="width: 135px;" type="date" id="fetchEndDate" max="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-neon-cyan px-3">
+                        <i class="bi bi-cloud-arrow-down-fill me-1"></i>Fetch
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
-<!-- Search, Filter & Gallery Controls -->
-<div class="card bg-dark bg-opacity-50 border border-secondary border-opacity-25 p-3 mb-4 rounded-3">
-    <form asp-controller="Home" asp-action="Index" method="get" class="row g-2 align-items-center">
-        <div class="col-md-5">
-            <div class="input-group input-group-sm">
-                <span class="input-group-text bg-dark border-secondary text-secondary">
-                    <i class="bi bi-search"></i>
-                </span>
-                <input type="text" name="search" value="@Model.SearchTerm" class="form-control bg-dark text-light border-secondary" placeholder="Search by title or description..." />
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="input-group input-group-sm">
-                <span class="input-group-text bg-dark border-secondary text-secondary">Media</span>
-                <select name="mediaType" class="form-select bg-dark text-light border-secondary">
-                    <option value="all" selected="@(Model.MediaTypeFilter == "all" || string.IsNullOrEmpty(Model.MediaTypeFilter))">All Types</option>
-                    <option value="image" selected="@(Model.MediaTypeFilter == "image")">Images Only</option>
-                    <option value="video" selected="@(Model.MediaTypeFilter == "video")">Videos Only</option>
-                </select>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="input-group input-group-sm">
-                <span class="input-group-text bg-dark border-secondary text-secondary">Sort</span>
-                <select name="sort" class="form-select bg-dark text-light border-secondary">
-                    <option value="desc" selected="@(Model.SortOrder == "desc" || string.IsNullOrEmpty(Model.SortOrder))">Newest</option>
-                    <option value="asc" selected="@(Model.SortOrder == "asc")">Oldest</option>
-                </select>
-            </div>
-        </div>
-        <div class="col-md-2 d-flex gap-1">
-            <button type="submit" class="btn btn-outline-info btn-sm flex-grow-1">Filter</button>
-            @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || Model.MediaTypeFilter != "all" || Model.SortOrder == "asc")
-            {
-                <a asp-action="Index" class="btn btn-outline-secondary btn-sm" title="Clear Filters">
-                    <i class="bi bi-x-lg"></i>
-                </a>
-            }
-        </div>
-    </form>
-</div>
-
-<!-- Gallery Section -->
+<!-- ===================================================================
+     Astronomy Gallery Grid
+     =================================================================== -->
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="text-light mb-0 fw-semibold">
-        <i class="bi bi-grid-fill text-info me-2"></i>Saved APOD Gallery
-    </h4>
+    <h5 class="text-light fw-bold mb-0 d-flex align-items-center gap-2">
+        <i class="bi bi-grid-3x3-gap-fill text-info"></i> Saved APOD Gallery
+    </h5>
     <span class="text-secondary small">
         Showing <strong>@Model.DisplayedCount</strong> of <strong>@Model.TotalSavedCount</strong> saved item(s)
     </span>
@@ -130,35 +89,26 @@
 }
 else
 {
-    <div class="card bg-dark bg-opacity-25 border border-secondary border-opacity-25 text-center py-5 my-4 rounded-4">
+    <div class="card glass-modal text-center py-5 my-4 border border-secondary border-opacity-25 rounded-4">
         <div class="card-body">
             <i class="bi bi-telescope fs-1 text-info mb-3 d-inline-block"></i>
             <h4 class="text-light mb-2">No Astronomy Pictures Found</h4>
             @if (Model.TotalSavedCount > 0)
             {
                 <p class="text-secondary mb-3">
-                    No saved records in your database matched your filter criteria
-                    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
-                    {
-                        <span>(Search: "<em>@Model.SearchTerm</em>")</span>
-                    }
-                    @if (Model.MediaTypeFilter != "all")
-                    {
-                        <span>(Media: <strong>@Model.MediaTypeFilter</strong>)</span>
-                    }
-                    .
+                    No pictures matched your search keyword "<em>@Model.SearchTerm</em>".
                 </p>
-                <a asp-action="Index" class="btn btn-outline-info btn-sm">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i> Clear All Filters
+                <a asp-action="Index" class="btn btn-outline-info btn-sm rounded-pill px-4">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Clear Filter
                 </a>
             }
             else
             {
-                <p class="text-secondary mb-3">Your database currently has no APOD records. Click below to fetch the latest astronomy pictures from NASA!</p>
+                <p class="text-secondary mb-3">Your database currently has no APOD records. Click below to fetch recent astronomy pictures!</p>
                 <form asp-controller="Home" asp-action="QuickFetch" method="post" class="d-inline-block">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="days" value="7" />
-                    <button type="submit" class="btn btn-info text-dark fw-semibold px-4 py-2 shadow">
+                    <button type="submit" class="btn btn-neon-cyan px-4 py-2">
                         <i class="bi bi-cloud-arrow-down-fill me-1"></i> Fetch Last 7 Days of APOD
                     </button>
                 </form>
@@ -170,8 +120,8 @@ else
 <!-- Dynamic Preview Modal -->
 <div class="modal fade" id="apodModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content bg-dark text-light border border-secondary shadow-lg">
-            <div class="modal-header border-secondary border-opacity-50">
+        <div class="modal-content glass-modal text-light">
+            <div class="modal-header border-secondary border-opacity-25 p-3">
                 <div>
                     <h5 class="modal-title fw-bold text-info" id="modalTitle">APOD Details</h5>
                     <span class="badge bg-secondary text-light small mt-1" id="modalDate"></span>
@@ -184,18 +134,11 @@ else
                 <h6 class="text-secondary fw-semibold text-uppercase small mb-2">Explanation</h6>
                 <p id="modalExplanation" class="text-light text-opacity-90 leading-relaxed mb-0" style="max-height: 200px; overflow-y: auto;"></p>
             </div>
-            <div class="modal-footer border-secondary border-opacity-50 d-flex justify-content-between">
-                <div>
-                    <a id="modalHdBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-info" style="display:none;">
-                        <i class="bi bi-arrows-fullscreen me-1"></i> View HD Image
-                    </a>
-                </div>
-                <div class="d-flex gap-2">
-                    <a id="modalFullPageLink" href="#" class="btn btn-sm btn-info text-dark fw-semibold">
-                        <i class="bi bi-box-arrow-up-right me-1"></i> Dedicated Page
-                    </a>
-                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
+            <div class="modal-footer border-secondary border-opacity-25 d-flex justify-content-end gap-2 p-3">
+                <a id="modalFullPageLink" href="#" class="btn btn-sm btn-neon-cyan">
+                    <i class="bi bi-box-arrow-up-right me-1"></i> Dedicated Page
+                </a>
+                <button type="button" class="btn btn-sm btn-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

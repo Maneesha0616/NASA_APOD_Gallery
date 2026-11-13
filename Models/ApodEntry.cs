@@ -49,10 +49,41 @@ public class ApodEntry
 
     /// <summary>
     /// Returns the best URL to display as thumbnail or primary visual element.
-    /// If media_type is video and thumbnail_url exists, returns thumbnail_url; otherwise url.
+    /// Prefers the direct image source (HdUrl from assets.science.nasa.gov or direct .jpg/.png),
+    /// avoiding webpage/article URLs.
     /// </summary>
-    public string DisplayImageUrl =>
-        !string.IsNullOrWhiteSpace(ThumbnailUrl) ? ThumbnailUrl : Url;
+    public string DisplayImageUrl
+    {
+        get
+        {
+            // If HdUrl is provided and looks like an image or NASA assets image, prefer it
+            if (!string.IsNullOrWhiteSpace(HdUrl) && IsImageSource(HdUrl))
+            {
+                return HdUrl;
+            }
+
+            // If Url looks like an image, use it
+            if (!string.IsNullOrWhiteSpace(Url) && IsImageSource(Url))
+            {
+                return Url;
+            }
+
+            // Fallback to whichever is non-empty
+            return !string.IsNullOrWhiteSpace(HdUrl) ? HdUrl : (Url ?? string.Empty);
+        }
+    }
+
+    private static bool IsImageSource(string u)
+    {
+        if (string.IsNullOrWhiteSpace(u)) return false;
+        var clean = u.ToLowerInvariant();
+        if (clean.Contains("/image-article/") || clean.EndsWith(".html") || clean.EndsWith(".htm"))
+        {
+            return false;
+        }
+        return clean.Contains(".jpg") || clean.Contains(".jpeg") || clean.Contains(".png") ||
+               clean.Contains(".webp") || clean.Contains("dynamicimage") || clean.Contains("apod/image");
+    }
 
     /// <summary>
     /// Checks whether the entry is an image.

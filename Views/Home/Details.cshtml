@@ -40,21 +40,13 @@
     <div class="card-body p-4">
         <!-- Media Container -->
         <div class="mb-4">
-            @if (Model.IsVideo)
-            {
-                <div class="ratio ratio-16x9 shadow-lg">
-                    <iframe src="@Model.Url" title="@Model.Title" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-                </div>
-            }
-            else
-            {
-                <div class="apod-details-image-container shadow-lg">
-                    <img src="@Url.Action("ImageProxy", "Home", new { url = Model.DisplayImageUrl.Replace("http://", "https://") })"
-                         alt="@Model.Title"
-                         class="img-fluid"
-                         loading="lazy" />
-                </div>
-            }
+            <div class="apod-details-image-container shadow-lg">
+                <img src="@Model.DisplayImageUrl"
+                     alt="@Model.Title"
+                     class="img-fluid"
+                     loading="lazy"
+                     referrerpolicy="no-referrer" />
+            </div>
         </div>
 
         <!-- Action Links -->

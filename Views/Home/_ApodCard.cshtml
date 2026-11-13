@@ -4,25 +4,14 @@
     <div class="card apod-card w-100 h-100 shadow-sm d-flex flex-column">
         <!-- Media / Image Block -->
         <div class="apod-card-image-wrapper">
-            <img src="@(Model.IsImage ? Url.Action("ImageProxy", "Home", new { url = Model.DisplayImageUrl.Replace("http://", "https://") }) : Model.DisplayImageUrl)"
+            <img src="@Model.DisplayImageUrl"
                  alt="@Model.Title"
                  class="apod-card-img"
                  loading="lazy"
-                 onerror="this.onerror=null; this.classList.add('img-error');" />
-
-            @if (Model.IsVideo)
-            {
-                <div class="video-overlay-badge" title="Video Media">
-                    <i class="bi bi-play-fill"></i>
-                </div>
-            }
+                 referrerpolicy="no-referrer" />
 
             <span class="badge apod-badge-date position-absolute top-0 start-0 m-2 rounded-pill px-2 py-1 shadow">
                 <i class="bi bi-calendar3 me-1"></i>@Model.Date.ToString("yyyy-MM-dd")
-            </span>
-
-            <span class="badge bg-dark bg-opacity-75 text-info position-absolute top-0 end-0 m-2 rounded-pill px-2 py-1 border border-secondary border-opacity-50">
-                <i class="bi @(Model.IsVideo ? "bi-camera-video" : "bi-image") me-1"></i>@(Model.MediaType?.ToUpperInvariant() ?? "IMAGE")
             </span>
         </div>
 
@@ -41,7 +30,7 @@
                         data-apod-title="@Model.Title"
                         data-apod-date="@Model.Date.ToString("MMMM dd, yyyy")"
                         data-apod-mediatype="@Model.MediaType"
-                        data-apod-url="@Model.Url"
+                        data-apod-url="@Model.DisplayImageUrl"
                         data-apod-hdurl="@Model.HdUrl"
                         data-apod-explanation="@Model.Explanation"
                         data-apod-copyright="@Model.Copyright">
