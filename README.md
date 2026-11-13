@@ -20,7 +20,7 @@ The application uses ADO.NET (SqlClient) to perform database operations, includi
 - **Sorting** – Sort saved pictures by newest or oldest date.
 - **Responsive Interface** – Browse the gallery through a modern, user-friendly cosmic interface.
 
-## 🛠️ Technologies Used
+## Technologies Used
 
 | Technology | Purpose |
 |---|---|
@@ -101,7 +101,7 @@ dotnet run
 
 Open the local URL displayed in the terminal (default: `http://localhost:5044`) to access the NASA APOD Gallery.
 
-## 🗄️ Database Information
+## Database Information
 
 The application stores NASA APOD information in SQL Server.
 
@@ -122,7 +122,7 @@ The `dbo.ApodEntries` database table includes the following columns:
 
 Database operations are implemented using pure **ADO.NET (`Microsoft.Data.SqlClient`)** with parameterized queries.
 
-## 📂 Project Submission
+## Project Submission
 
 This repository contains:
 
@@ -133,10 +133,9 @@ This repository contains:
 
 ## 👨‍💻 Author
 
-**Lakshan Bandara**
+**Maneesha Karunarathna**
 
 ## 📄 License
 
 This project was developed for educational purposes as part of a technical assignment.
-
 
