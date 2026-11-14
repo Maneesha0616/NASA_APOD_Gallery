@@ -1,7 +1,4 @@
--- ===================================================================
 -- Database Creation Script for NASA APOD Gallery Application
--- Target: Microsoft SQL Server / SQL Server Express / LocalDB
--- ===================================================================
 
 -- 1. Create Database if it does not already exist
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'NasaApodDb')
@@ -18,7 +15,7 @@ GO
 USE [NasaApodDb];
 GO
 
--- 2. Create ApodEntries Table if it does not already exist
+-- 2. Create ApodEntries Table 
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = N'ApodEntries' AND type = 'U')
 BEGIN
     CREATE TABLE [dbo].[ApodEntries] (

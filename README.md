@@ -131,11 +131,11 @@ This repository contains:
 - Application configuration instructions.
 - Instructions for setting up the NASA API key.
 
-## 👨‍💻 Author
+##  Author
 
 **Maneesha Karunarathna**
 
-## 📄 License & Purpose
+## License & Purpose
 
 This project was developed as a technical assessment assignment for an internship interview.
 
