@@ -20,7 +20,11 @@ The application uses ADO.NET (SqlClient) to perform database operations, includi
 - **Sorting** – Sort saved pictures by newest or oldest date.
 - **Responsive Interface** – Browse the gallery through a modern, user-friendly cosmic interface.
 
+<<<<<<< HEAD
 ## Technologies Used
+=======
+##  Technologies Used
+>>>>>>> 9235970607274f60ceac278a2c1a3835677a3fc6
 
 | Technology | Purpose |
 |---|---|
@@ -131,11 +135,14 @@ This repository contains:
 - Application configuration instructions.
 - Instructions for setting up the NASA API key.
 
+<<<<<<< HEAD
 ##  Author
 
 **Maneesha Karunarathna**
 
 ## License & Purpose
+=======
+>>>>>>> 9235970607274f60ceac278a2c1a3835677a3fc6
 
 This project was developed as a technical assessment assignment for an internship interview.
 
